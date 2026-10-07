@@ -2,75 +2,714 @@ export default function handler(req, res) {
   const html = `<!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portale RENTRI</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 20px;
-    }
-    .container { max-width: 1000px; margin: 0 auto; }
-    .header {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .header h1 { color: #333; font-size: 28px; margin-bottom: 10px; }
-    .header p { color: #666; font-size: 14px; }
-    .status {
-      margin-top: 15px;
-      padding: 12px;
-      background: #d4edda;
-      color: #155724;
-      border-radius: 6px;
-      font-weight: 500;
-      font-size: 14px;
-    }
-    .card {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
-    .card h2 { color: #333; margin-bottom: 15px; font-size: 24px; }
-    .card p { color: #666; margin-bottom: 20px; font-size: 16px; }
-    button {
-      background: #667eea;
-      color: white;
-      padding: 12px 30px;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    button:hover { background: #5568d3; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portale RENTRI - Gestione Notifiche</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .header .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #667eea;
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input[type="file"] {
+            padding: 0;
+            border: 2px dashed #e0e0e0;
+            cursor: pointer;
+        }
+
+        .form-group input[type="file"]:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 11px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-small {
+            flex: 0;
+            padding: 6px 12px;
+            font-size: 11px;
+            width: auto;
+            margin-right: 5px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            background: #f8f9ff;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            color: #333;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #666;
+        }
+
+        tr:hover {
+            background: #f8f9ff;
+        }
+
+        .checkbox-cell {
+            text-align: center;
+        }
+
+        .checkbox-cell input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .days-badge {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .days-badge.urgent {
+            background: #e74c3c;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-box .number {
+            font-size: 24px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-box .label {
+            font-size: 11px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>📋 Portale RENTRI</h1>
-      <p>Gestione centralizzata clienti, scadenze notifiche e storico comunicazioni</p>
-      <div class="status">✅ PORTALE ONLINE E FUNZIONANTE</div>
-    </div>
-    <div class="card">
-      <h2>🚀 Portale RENTRI Pronto!</h2>
-      <p>Se vedi questa pagina formattata con i colori, Vercel sta servendo correttamente i file HTML!</p>
-      <button onclick="alert('✅ Portale RENTRI funziona correttamente!')">Test Portale</button>
-    </div>
-  </div>
-</body>
-</html>`;
+    <div class="container">
+        <div class="header">
+            <h1>📋 Portale RENTRI</h1>
+            <p>Gestione centralizzata clienti, scadenze notifiche e storico comunicazioni</p>
+            <div id="connectionStatus" class="status disconnected">🔴 Non connesso a Supabase</div>
+        </div>
 
+        <div class="main-grid">
+            <!-- FORM NUOVO CLIENTE -->
+            <div class="card">
+                <h2>Nuovo Cliente</h2>
+                <div id="formMessage"></div>
+                <form id="clientForm">
+                    <div class="form-group">
+                        <label>Denominazione Sociale *</label>
+                        <input type="text" id="ragioneSociale" required placeholder="es. Acme S.r.l.">
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="email" required placeholder="es. info@acme.it">
+                    </div>
+                    <div class="form-group">
+                        <label>Telefono</label>
+                        <input type="tel" id="telefono" placeholder="+39 333 1234567">
+                    </div>
+                    <div class="form-group">
+                        <label>Data primo carico rifiuti *</label>
+                        <input type="date" id="dataCarico" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Frequenza notifiche (giorni) *</label>
+                        <input type="number" id="frequenza" value="30" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Allega file Word (codici) *</label>
+                        <input type="file" id="fileWord" accept=".doc,.docx" required>
+                        <small style="color: #999; margin-top: 5px; display: block;">File sarà caricato su Supabase Storage</small>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" id="submitBtn">➕ Aggiungi Cliente</button>
+                        <button type="reset" class="btn-secondary">Cancella</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- STATISTICHE E TABELLA -->
+            <div>
+                <div class="card">
+                    <div class="stats">
+                        <div class="stat-box">
+                            <span class="number" id="totalClients">0</span>
+                            <span class="label">Clienti Totali</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="number" id="pendingSend">0</span>
+                            <span class="label">Urgenti (≤7gg)</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="number" id="totalReplied">0</span>
+                            <span class="label">Risposte Ricevute</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <h2>Storico Notifiche</h2>
+                    <div class="table-container">
+                        <table id="clientTable">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Scadenza (Giorni)</th>
+                                    <th>Email</th>
+                                    <th>Ultima Mail</th>
+                                    <th style="text-align: center;">✓ Risposta</th>
+                                    <th style="width: 120px;">Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <tr>
+                                    <td colspan="6" class="loading">Caricamento...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURAZIONE SUPABASE
+        // ============================================
+        // ATTENZIONE: Sostituisci con i tuoi valori!
+        const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+        const SUPABASE_KEY = 'YOUR_ANON_KEY';
+
+        let supabase = null;
+        let isConnected = false;
+
+        try {
+            if (SUPABASE_URL === 'https://YOUR_PROJECT.supabase.co') {
+                throw new Error('Configura SUPABASE_URL e SUPABASE_KEY nel portale');
+            }
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            isConnected = true;
+            updateConnectionStatus();
+        } catch (error) {
+            console.error('Supabase init error:', error);
+            showError(`⚠️ Configura Supabase nel portale: ${error.message}`);
+        }
+
+        // ============================================
+        // UI UTILITIES
+        // ============================================
+        function showError(msg) {
+            const formMessage = document.getElementById('formMessage');
+            formMessage.innerHTML = `<div class="error">${msg}</div>`;
+            setTimeout(() => formMessage.innerHTML = '', 5000);
+        }
+
+        function showSuccess(msg) {
+            const formMessage = document.getElementById('formMessage');
+            formMessage.innerHTML = `<div class="success">${msg}</div>`;
+            setTimeout(() => formMessage.innerHTML = '', 5000);
+        }
+
+        function updateConnectionStatus() {
+            const status = document.getElementById('connectionStatus');
+            if (isConnected && supabase) {
+                status.className = 'status connected';
+                status.textContent = '✓ Connesso a Supabase';
+            } else {
+                status.className = 'status disconnected';
+                status.textContent = '🔴 Non connesso a Supabase';
+            }
+        }
+
+        // ============================================
+        // CALCOLI
+        // ============================================
+        function calculateDaysUntilDeadline(dataCarico, frequenza) {
+            const firstLoad = new Date(dataCarico);
+            const deadline = new Date(firstLoad);
+            deadline.setDate(deadline.getDate() + frequenza);
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            deadline.setHours(0, 0, 0, 0);
+
+            const diff = deadline - today;
+            return Math.ceil(diff / (1000 * 60 * 60 * 24));
+        }
+
+        function formatDate(date) {
+            if (!date) return '—';
+            const d = new Date(date);
+            return d.toLocaleDateString('it-IT', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        }
+
+        // ============================================
+        // CRUD OPERAZIONI
+        // ============================================
+        async function addClient(e) {
+            e.preventDefault();
+
+            if (!isConnected) {
+                showError('Errore: Supabase non connesso');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+
+            try {
+                const ragioneSociale = document.getElementById('ragioneSociale').value;
+                const email = document.getElementById('email').value;
+                const telefono = document.getElementById('telefono').value;
+                const dataCarico = document.getElementById('dataCarico').value;
+                const frequenza = parseInt(document.getElementById('frequenza').value);
+                const fileWord = document.getElementById('fileWord').files[0];
+
+                if (!fileWord) {
+                    showError('Seleziona un file Word');
+                    submitBtn.disabled = false;
+                    return;
+                }
+
+                // 1. Upload file su Storage
+                const fileName = `${Date.now()}-${fileWord.name}`;
+                const filePath = `clients/${ragioneSociale}/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('rentri-documents')
+                    .upload(filePath, fileWord);
+
+                if (uploadError) throw uploadError;
+
+                // 2. Get file public URL
+                const { data: urlData } = supabase.storage
+                    .from('rentri-documents')
+                    .getPublicUrl(filePath);
+
+                // 3. Insert cliente in DB
+                const { error: clientError } = await supabase
+                    .from('clients')
+                    .insert({
+                        ragione_sociale: ragioneSociale,
+                        email: email,
+                        telefono: telefono || null,
+                        data_primo_carico: dataCarico,
+                        frequenza_giorni: frequenza,
+                        file_word_url: urlData.publicUrl,
+                        file_word_path: filePath,
+                        status: 'attivo'
+                    });
+
+                if (clientError) throw clientError;
+
+                showSuccess(`✓ Cliente "${ragioneSociale}" aggiunto al sistema!`);
+                document.getElementById('clientForm').reset();
+                loadClientsFromSupabase();
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(`✗ Errore: ${error.message}`);
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function sendMailManual(clientId) {
+            if (!isConnected) {
+                showError('Errore: Supabase non connesso');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/send-notification-manual', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_id: clientId })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showSuccess(data.message);
+                    loadClientsFromSupabase();
+                } else {
+                    showError(`✗ ${data.error}`);
+                }
+            } catch (error) {
+                showError(`✗ Errore di rete: ${error.message}`);
+            }
+        }
+
+        async function toggleRisposta(clientId, notificationId, currentValue) {
+            if (!isConnected) {
+                showError('Errore: Supabase non connesso');
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('notifications')
+                    .update({
+                        risposta_ricevuta: !currentValue,
+                        data_risposta: !currentValue ? new Date().toISOString() : null
+                    })
+                    .eq('id', notificationId);
+
+                if (error) throw error;
+                loadClientsFromSupabase();
+            } catch (error) {
+                showError(`✗ Errore: ${error.message}`);
+            }
+        }
+
+        async function deleteClient(clientId) {
+            if (!isConnected) {
+                showError('Errore: Supabase non connesso');
+                return;
+            }
+
+            if (!confirm('Sei sicuro di voler eliminare questo cliente?')) return;
+
+            try {
+                const { error } = await supabase
+                    .from('clients')
+                    .delete()
+                    .eq('id', clientId);
+
+                if (error) throw error;
+                showSuccess('Cliente eliminato');
+                loadClientsFromSupabase();
+            } catch (error) {
+                showError(`✗ Errore: ${error.message}`);
+            }
+        }
+
+        async function loadClientsFromSupabase() {
+            if (!isConnected) {
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '<tr><td colspan="6" class="error">Errore: Configura Supabase</td></tr>';
+                return;
+            }
+
+            try {
+                const { data: clients, error } = await supabase
+                    .from('clients')
+                    .select(`
+                        id,
+                        ragione_sociale,
+                        email,
+                        data_primo_carico,
+                        frequenza_giorni,
+                        notifications(id, data_invio_effettiva, status, risposta_ricevuta)
+                    `)
+                    .eq('status', 'attivo')
+                    .order('ragione_sociale', { ascending: true });
+
+                if (error) throw error;
+
+                const tbody = document.getElementById('tableBody');
+
+                if (!clients || clients.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nessun cliente registrato. Aggiungi il primo cliente a sinistra.</td></tr>';
+                    updateStats([]);
+                    return;
+                }
+
+                tbody.innerHTML = clients.map(client => {
+                    const daysLeft = calculateDaysUntilDeadline(client.data_primo_carico, client.frequenza_giorni);
+                    const isUrgent = daysLeft <= 7;
+
+                    const lastNotif = client.notifications?.[0];
+                    const lastMailDate = lastNotif?.data_invio_effettiva
+                        ? formatDate(lastNotif.data_invio_effettiva)
+                        : '—';
+                    const hasReply = lastNotif?.risposta_ricevuta || false;
+
+                    return `
+                        <tr>
+                            <td><strong>${client.ragione_sociale}</strong></td>
+                            <td>
+                                <span class="days-badge ${isUrgent ? 'urgent' : ''}">
+                                    ${daysLeft > 0 ? '⏱ ' + daysLeft + 'gg' : '🔴 Scaduto'}
+                                </span>
+                            </td>
+                            <td style="font-size: 12px; color: #999;">${client.email}</td>
+                            <td>${lastMailDate}</td>
+                            <td class="checkbox-cell">
+                                <input type="checkbox" ${hasReply ? 'checked' : ''}
+                                    onchange="toggleRisposta(${client.id}, ${lastNotif?.id || 'null'}, ${hasReply})"
+                                    ${!lastNotif ? 'disabled' : ''}
+                                    title="${lastNotif ? 'Marca se cliente ha risposto' : 'Invia prima una mail'}">
+                            </td>
+                            <td>
+                                <button class="btn-small" onclick="sendMailManual(${client.id})">📧 Invia</button>
+                                <button class="btn-small" style="background: #e74c3c;" onclick="deleteClient(${client.id})">🗑</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                updateStats(clients);
+
+            } catch (error) {
+                console.error('Error loading clients:', error);
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = `<tr><td colspan="6" class="error">Errore di caricamento: ${error.message}</td></tr>`;
+            }
+        }
+
+        function updateStats(clients) {
+            const totalClients = clients.length;
+            const pendingSend = clients.filter(c =>
+                calculateDaysUntilDeadline(c.data_primo_carico, c.frequenza_giorni) <= 7 &&
+                calculateDaysUntilDeadline(c.data_primo_carico, c.frequenza_giorni) > 0
+            ).length;
+            const totalReplied = clients.filter(c =>
+                c.notifications?.[0]?.risposta_ricevuta
+            ).length;
+
+            document.getElementById('totalClients').textContent = totalClients;
+            document.getElementById('pendingSend').textContent = pendingSend;
+            document.getElementById('totalReplied').textContent = totalReplied;
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+        document.getElementById('clientForm').addEventListener('submit', addClient);
+        window.addEventListener('DOMContentLoaded', () => {
+            updateConnectionStatus();
+            loadClientsFromSupabase();
+        });
+
+        // Refresh ogni 30 secondi
+        setInterval(loadClientsFromSupabase, 30000);
+    </script>
+</body>
+</html>
+`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.status(200).send(html);
 }
