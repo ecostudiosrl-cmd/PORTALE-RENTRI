@@ -1,0 +1,12 @@
+{
+  "name": "portale-rentri",
+  "version": "1.0.0",
+  "description": "Portale gestione RENTRI",
+  "main": "api/index.js",
+  "scripts": {
+    "build": "echo 'Static build complete'"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0"
+  }
+}
