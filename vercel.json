@@ -1,5 +1,6 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "echo 'Static build complete'",
+  "outputDirectory": "public",
   "crons": [
     {
       "path": "/api/cron/send-notifications",
