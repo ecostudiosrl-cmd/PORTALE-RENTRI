@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npm run build",
+  "crons": [
+    {
+      "path": "/api/cron/send-notifications",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}
